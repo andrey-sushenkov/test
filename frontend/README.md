@@ -1,5 +1,7 @@
 # frontend
 
+![img.png](img.png)
+
 ## Project setup
 ```
 yarn install
