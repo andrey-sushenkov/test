@@ -66,8 +66,10 @@ export default {
   },
   watch: {
     amount(newVal) {
-      if (!newVal) {
-        return this.amount = 0
+      if (Number.isNaN(newVal) || !newVal) {
+        this.amount = 0
+        this.selectedPreset = null
+        return
       }
       this.amount = parseInt(newVal)
       this.selectedPreset = this.options.some(p => this.amount === p.value) ? this.amount : null
