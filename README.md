@@ -1,3 +1,6 @@
+- Клоним репу - `git clone https://github.com/blognat/test.git`
+- Заходим в папку: `cd test`
+
 ### Запуск frontend
 
 ```
