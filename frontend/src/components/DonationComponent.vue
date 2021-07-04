@@ -1,37 +1,17 @@
 <template lang="pug">
   div.wrapper
     .d-flex.flex-column
-      radio-button-group(
-        :value.sync="selectedPreset"
-        :options="options"
+      radio-button-group(:value.sync="selectedPreset" :options="options")
+
+      donate-amount-input(
+        :selectedCurrency.sync="selectedCurrency"
+        :symbol="selectedCurrency.symbol"
+        :code="selectedCurrency.code"
+        :currencies="currencies"
+        :donateAmount.sync="amount"
       )
 
-      div.input-group.mb-5
-        span.input-group-text {{ selectedCurrency.symbol }}
-        b-input.form-control.amount-input(
-          id="number_input"
-          min="1"
-          step="1"
-          v-model="amount"
-          type="number"
-          @input="inputEvent"
-          @keydown.native="onInputKeydown"
-        )
-
-        b-dropdown.currency-dropdown(variant="link")
-          template.d-flex.row.align-items-center(v-slot:button-content)
-            span.mx-1 {{ selectedCurrency.code }}
-          b-dropdown-item(
-            v-for="currency in currencies"
-            :key="`currency_symbol_${currency.symbol}`"
-            @click="selectedCurrency = currency"
-          ) {{ currency.code }}
-
-      b-button.btn.btn-primary.mx-3(
-        variant="primary"
-        @click="donate"
-        :disabled="loading"
-      )
+      b-button.btn.btn-primary.mx-3(variant="primary" @click="donate" :disabled="loading")
         b-icon(v-if="loading" icon="arrow-clockwise" animation="spin")
         span(v-else) DONATE
 
@@ -41,35 +21,37 @@
 <script>
 import api from '../../httpClient'
 import RadioButtonGroup from './RadioButtonGroup'
+import DonateAmountInput from './DonateAmountInput'
+
+import { roundUpAmount } from '../helper'
 
 export default {
   name: 'donation-component',
   components: {
     RadioButtonGroup,
+    DonateAmountInput,
   },
   data() {
     const currencies = [
-        { name: 'US Dollar', code: 'USD', symbol: '$', rate: 1 },
-        { name: 'Euro', code: 'EUR', symbol: '€', rate: 0.897597 },
-        { name: 'British Pound', code: 'GBP', symbol: '£', rate: 0.81755 },
-        { name: 'Russian Ruble', code: 'RUB', symbol: '₽', rate: 63.461993 },
-      ]
-    const selectedCurrency = currencies[0]
+      { name: 'US Dollar', code: 'USD', symbol: '$', rate: 1 },
+      { name: 'Euro', code: 'EUR', symbol: '€', rate: 0.897597 },
+      { name: 'British Pound', code: 'GBP', symbol: '£', rate: 0.81755 },
+      { name: 'Russian Ruble', code: 'RUB', symbol: '₽', rate: 63.461993 },
+    ]
     const defaultPreset = 40
 
     return {
       loading: false,
 
       presets: [40, 100, 200, 1000, 2500, 5000],
-      selectedPreset: defaultPreset,
+      selectedPreset: 40,
       amount: defaultPreset,
 
       currencies,
-      selectedCurrency,
+      selectedCurrency: currencies[0],
       errorMessage: null,
       successMessage: null,
-
-      unavailableSymbols: [',', '.', 'e', '+', '-']
+      roundUpAmount,
     }
   },
   computed: {
@@ -84,44 +66,31 @@ export default {
   },
   watch: {
     amount(newVal) {
-      this.amount = Number(newVal)
+      if (!newVal) {
+        return this.amount = 0
+      }
+      this.amount = parseInt(newVal)
+      this.selectedPreset = this.options.some(p => this.amount === p.value) ? this.amount : null
+    },
+
+    selectedPreset(newVal) {
+      if (newVal) this.amount = newVal
     },
 
     selectedCurrency() {
       const amount = this.convertToRate(this.amount)
 
       if (!this.selectedPreset) {
-        this.amount = Math.floor(amount)
-      } else {
-        this.amount = this.roundUpAmount(amount)
-        this.selectedPreset = this.amount
+        return this.amount = Math.floor(amount)
       }
+
+      this.amount = this.roundUpAmount(amount)
+      this.selectedPreset = this.amount
     },
   },
   methods: {
-    inputEvent(value) {
-      if (!value) this.amount = 0
-
-      const number = parseInt(value)
-      this.selectedPreset = this.options.some(p => number === p.value)
-        ? number : null
-    },
-
-    onInputKeydown(event) {
-      if (this.unavailableSymbols.includes(event.key)) {
-        event.preventDefault()
-      }
-    },
-
     convertToRate(amount) {
       return this.selectedCurrency.rate * parseInt(amount)
-    },
-
-    roundUpAmount(amount) {
-      const bitness = Math.pow(10, Math.ceil(amount).toString().length - 1)
-      const rest = Math.floor(amount % bitness)
-      const roundTo = rest >= bitness / 2 ? amount + bitness - rest : amount - rest
-      return Math.floor(roundTo)
     },
 
     async donate() {
@@ -131,7 +100,9 @@ export default {
 
       try {
         await api.donate({ currency: this.selectedCurrency.code, amount: this.amount })
+
         await new Promise((resolve) => setTimeout(resolve, 2000)) // just to imitate a loader
+
         this.successMessage = 'Thank you for your donation!'
       } catch (error) {
         this.errorMessage = error.message
@@ -154,43 +125,5 @@ export default {
   border-width: 3px;
   margin-left: auto;
   margin-right: auto;
-}
-
-.input-group {
-  width: 250px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.input-group-text {
-  background-color: white;
-  border-top: 1px;
-  border-bottom: 1px;
-  border-left: 1px;
-}
-
-.amount-input {
-  border-top: 1px;
-  border-bottom: 1px;
-  border-right: unset;
-  border-left: unset;
-}
-</style>
-
-<style>
-.currency-dropdown button  {
-  background-color: white;
-  border-top: 1px;
-  border-right: 1px;
-  border-bottom: 1px;
-}
-
-input[type=number] {
-  -moz-appearance: textfield;
-}
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
 }
 </style>
