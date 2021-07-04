@@ -18,10 +18,12 @@ yarn serve
 Создать `.env` file с содержимым 
 ```
 NODE_ENV=test (дефолтное состояние, запускает mongodb in memory. Консолит адрес коннекта)
+```
 или
+```
 NODE_ENV=production
-MONGO_URI= (по дефолту - 'mongodb://127.0.0.1:8004')
-MONGO_DATABASE= (по дефолту - 'test-database') 
+MONGO_URI=      # (по дефолту - 'mongodb://127.0.0.1:8004')
+MONGO_DATABASE= # (по дефолту - 'test-database') 
 ```
 
 ```
