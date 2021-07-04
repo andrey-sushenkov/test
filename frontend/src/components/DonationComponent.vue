@@ -1,16 +1,10 @@
 <template lang="pug">
   div.wrapper
     .d-flex.flex-column
-      b-form-group.mb-5
-        b-form-radio-group.radio-button-group(
-          id="btn-radios-1"
-          v-model="selectedPreset"
-          :options="options"
-          name="radios-btn-default"
-          buttons
-          button-variant="outline-primary"
-          @input="inputRadioEvent($event)"
-        )
+      radio-button-group(
+        :value.sync="selectedPreset"
+        :options="options"
+      )
 
       div.input-group.mb-5
         span.input-group-text {{ selectedCurrency.symbol }}
@@ -46,9 +40,13 @@
 
 <script>
 import api from '../../httpClient'
+import RadioButtonGroup from './RadioButtonGroup'
 
 export default {
   name: 'donation-component',
+  components: {
+    RadioButtonGroup,
+  },
   data() {
     const currencies = [
         { name: 'US Dollar', code: 'USD', symbol: '$', rate: 1 },
@@ -107,10 +105,6 @@ export default {
       const number = parseInt(value)
       this.selectedPreset = this.options.some(p => number === p.value)
         ? number : null
-    },
-
-    inputRadioEvent(value) {
-      if (value) this.amount = value
     },
 
     onInputKeydown(event) {
@@ -189,10 +183,6 @@ export default {
   border-top: 1px;
   border-right: 1px;
   border-bottom: 1px;
-}
-
-[type='radio'] {
-  display: none;
 }
 
 input[type=number] {
